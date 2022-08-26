@@ -10,7 +10,7 @@ enum Color {
         match self {
             Color::Black => Color::White,
             Color::White => Color::Black,
-            Color::Nil => unreachable!()
+            _ => unreachable!()
         }
     }
     fn is_nil(&self) -> bool {
@@ -45,11 +45,18 @@ impl Tree {
 fn main() {
     input! {n: usize}
     let mut tree = Tree::build(n);
-    
+
+    /*
+    任意の木は二部グラフである。
+    二部グラフを２彩色したとき、少なくとも一方の色は n/2 個以上の頂点に塗られている。したがって、それらの頂点から
+    n/2 個選んで出力すればよい。
+    木の２彩色には dfs を用いればよい。
+    */
+
     let (current_color, mut color_map) = (Color::Black, vec![Color::Nil; 1+n]);
     tree.dfs_from(1, current_color, &mut color_map);
 
-    let mut more_than_half_of_all_nodes = {
+    let mut more_than_half_nodes = {
         let (mut black_nodes, mut white_nodes) = (vec![], vec![]);
         for i in 1..=n {
             match color_map[i] {
@@ -60,5 +67,5 @@ fn main() {
         }
         if black_nodes.len() > white_nodes.len() {black_nodes} else {white_nodes}
     };
-    println!("{}", more_than_half_of_all_nodes.drain(..(n/2)).fold("".to_owned(), |x,y| x+&(y.to_string()+" ")).trim())
+    println!("{}", more_than_half_nodes.drain(..(n/2)).fold("".to_owned(), |x,y| x + &y.to_string() + " ").trim());
 }
