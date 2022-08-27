@@ -1,4 +1,4 @@
-use std::{vec, fmt::Display};
+use std::vec;
 use proconio::input;
 
 /*
@@ -75,7 +75,7 @@ impl Field {
         self.0[ry][lx] -= 1;
         self.0[ry][rx] += 1;
         // 座標の値のインデックス (0〜) で accumulate することで、
-        // のちに calc したときにちょうど紙があるマス目のインデックス (0〜) のところ全てに +1 されることになる
+        // のちに calc したときにちょうど紙が存在しているマス目 (0個目〜) のところ全てに +1 されることになる
     }
     fn calc(&mut self) {
         // 縦に累積和
@@ -100,15 +100,6 @@ impl Field {
             }
         }
         ans
-    }
-}
-impl Display for Field {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}",
-            self.0.iter().map(|v|
-                v.iter().map(|x| x.to_string()).collect::<Vec<_>>().join(" ")
-            ).collect::<Vec<_>>().join("\n")
-        )
     }
 }
 
