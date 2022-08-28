@@ -1,75 +1,61 @@
-use std::{ops::Range, cmp};
+use std::{ops::RangeInclusive, cmp, fmt::Debug};
 use proconio::input;
 
 
-struct Tree(Vec<usize>);
-impl Tree {
-    fn is_root_index(node_index: usize) -> bool {
-        node_index == 0
+
+const ROOT_IDX: usize = 1;
+
+type CBT = CompleteBinaryTree;
+struct CompleteBinaryTree(Vec<usize>);
+impl CompleteBinaryTree {
+    fn parent_pos_of(node_pos: usize) -> usize {
+        node_pos / 2
+    }
+    fn left_child_pos_of(node_pos: usize) -> usize {
+        node_pos * 2
+    }
+    fn right_child_pos_of(node_pos: usize) -> usize {
+        node_pos * 2 + 1
     }
 
-    fn parent_index_of(node_index: usize) -> usize {
-        (node_index - 1) / 2
+    fn get(&self, pos: usize) -> usize {
+        self.0[pos]
     }
-    fn left_child_index_of(node_index: usize) -> usize {
-        (node_index + 1) * 2 - 1
-    }
-    fn right_child_index_of(node_index: usize) -> usize {
-        (node_index + 1 ) * 2
-    }
-
-    fn get(&self, index: usize) -> usize {
-        self.0[index]
-    }
-    fn update_value_at(&mut self, update_index: usize, value: usize) {
-        self.0[update_index] = value
+    fn update_value_at(&mut self, update_pos: usize, value: usize) {
+        self.0[update_pos] = value
     }
     /*
-                  0
-             1           2
-          3    4      5      6
-         7 8  9 10  11 12
+                  1
+             2           3
+          4    5      6      7
+         8 9  10 11 12 13
 
-    [ #, #, #, #, #, #, #, #, #, #, #,  #,  # ]
-      0  1  2  3  4  5  6  7  8  9  10  11  12
+    [ #, #, #, #, #, #, #, #, #, #,  #,  #,  # ]
+      1  2  3  4  5  6  7  8  9  10  11  12  13
     */
 }
 
-struct IndexRange(Range<usize>);
-impl IndexRange {
-    fn contains(&self, another: &IndexRange) -> bool {
-        (self.0.start <= another.0.start) && (another.0.end <= self.0.end)
+struct IdxRange(RangeInclusive<usize>);
+impl IdxRange {
+    fn contains(&self, another: &IdxRange) -> bool {
+        (self.0.start() <= another.0.start()) && (another.0.end() <= self.0.end())
     }
-    fn is_in(&self, another: &IndexRange) -> bool {
+    fn is_in(&self, another: &IdxRange) -> bool {
         another.contains(self)
     }
-    fn is_out_of(&self, another: &IndexRange) -> bool {
-        self.0.end <= another.0.start || another.0.end <= self.0.start
+    fn is_out_of(&self, another: &IdxRange) -> bool {
+        self.0.end() < another.0.start() || another.0.end() < self.0.start()
     }
-    fn intersection(&self, another: &IndexRange) -> Option<IndexRange> {
-        if self.is_out_of(another) {
-            None
-        } else if self.contains(another) {
-            Some(IndexRange(another.0.start..another.0.end))
-        } else if self.is_in(another) {
-            Some(IndexRange(self.0.start..self.0.end))
-        } else {
-            let (sl, sr, al, ar) = (self.0.start, self.0.end, another.0.start, another.0.end);
-            Some(IndexRange(
-                if sl < ar {al..sr} else {sl..ar}
-            ))
-        }
-    }
-    fn left_half(&self) -> IndexRange {
-        let mid = (self.0.start + self.0.end) / 2;
-        IndexRange(
-            (self.0.start)..mid
+    fn left_half(&self) -> IdxRange {
+        let mid = (self.0.start() + self.0.end()) / 2;
+        IdxRange(
+            (*self.0.start())..=mid
         )
     }
-    fn right_half(&self) -> IndexRange {
-        let mid = (self.0.start + self.0.end) / 2;
-        IndexRange(
-            mid..(self.0.end)
+    fn right_half(&self) -> IdxRange {
+        let mid = (self.0.start() + self.0.end()) / 2;
+        IdxRange(
+            (mid + 1)..=(*self.0.end())
         )
     }
 }
@@ -86,67 +72,161 @@ struct /*Lazy*/SegmentTree {  // for range_max //
        [ $,$, $,$,  $,$,  $,$ ]
     */
     array_size:   usize,
-    segment_tree: Tree,
-    lazy_tree:    Tree,
+    segment_tree: CompleteBinaryTree,
+    // lazy_tree:    CompleteBinaryTree,
 } impl /*Lazy*/SegmentTree {
-    fn tree_size(&self) -> usize {
-        Self::_tree_size_from(self.array_size)
-    }
-    fn _tree_size_from(array_size: usize) -> usize {
-        array_size * 2 - 1
-    }
-
     fn new(array_size_raw: usize) -> /*Lazy*/SegmentTree {
         let array_size = array_size_raw.next_power_of_two();
-        let tree_size = Self::_tree_size_from(array_size);
+        let tree_size = array_size * 2 - 1;
 
         /*Lazy*/SegmentTree {
             array_size,
-            segment_tree: Tree(vec![0; tree_size]),
-            lazy_tree:    Tree(vec![0; tree_size]),
+            segment_tree: CompleteBinaryTree(vec![0; 1+tree_size]),
+            // lazy_tree:    CompleteBinaryTree(vec![0; 1+tree_size]),
         }
     }
 
-    fn range_max(&self, search_range: Range<usize>) -> usize {
+    fn range_max(&self, search_range: RangeInclusive<usize>) -> usize {
         self._range_max(
-            &IndexRange(search_range),
-            IndexRange(0..self.array_size),
-            1
+            &IdxRange(search_range),
+            ROOT_IDX,
+            IdxRange(ROOT_IDX..=self.array_size)
         )
     }
     fn _range_max(&self,
-        search_range:            &IndexRange,
-        current_searching_range: IndexRange,
-        current_index_in_tree:   usize
+        search_range:            &IdxRange,
+        current_pos_in_tree:     usize,
+        current_searching_range: IdxRange, // これは current_searching_pos_in_tree と self.array_size に依存して決まる
+                                           // が、引数として持つ方が速い
     ) -> usize {
         match current_searching_range {
             range if range.is_out_of(search_range) => 0,
-            range if range.is_in(search_range)     => self.segment_tree.get(current_index_in_tree),
+            range if range.is_in(search_range)     => self.segment_tree.get(current_pos_in_tree),
             _ => cmp::max(
-                self._range_max(search_range, current_searching_range.left_half(),  Tree::left_child_index_of(current_index_in_tree)),
-                self._range_max(search_range, current_searching_range.right_half(), Tree::right_child_index_of(current_index_in_tree))
+                self._range_max(search_range, CBT::left_child_pos_of(current_pos_in_tree),  current_searching_range.left_half()),
+                self._range_max(search_range, CBT::right_child_pos_of(current_pos_in_tree), current_searching_range.right_half())
             )
         }
     }
 
-    fn update(&mut self, update_range: IndexRange, value: usize) {
+    fn update(&mut self, updating_pos_in_array: usize, new_value: usize) {
+        let mut updating_pos_in_tree = self.array_size + updating_pos_in_array;
+        self.segment_tree.update_value_at(updating_pos_in_tree, new_value);
+        // =============================================================================================
+        println!("value at pos({}){}: updated", updating_pos_in_tree, if updating_pos_in_tree < 10 {" "} else {""});
+        println!("{:?}", self.segment_tree.0);
+        // =============================================================================================
 
-    }
-    fn _update(&mut self, update_index_in_array: usize, value: usize) {
-        let mut update_index_in_tree = self.array_size + update_index_in_array;
-        while !Tree::is_root_index(update_index_in_tree) {
-            self.segment_tree.update_value_at(update_index_in_tree, value);
-            update_index_in_tree = Tree::parent_index_of(update_index_in_tree);
+        while updating_pos_in_tree > ROOT_IDX {
+            updating_pos_in_tree = CBT::parent_pos_of(updating_pos_in_tree);
+            let old_value = self.segment_tree.get(updating_pos_in_tree);
+
+            if new_value <= old_value {
+                // =============================================================================================
+                println!("-- breaked at pos({})", updating_pos_in_tree);
+                // =============================================================================================
+                break;
+            }
+
+            self.segment_tree.update_value_at(updating_pos_in_tree, new_value);
+            // =============================================================================================
+            println!("value at pos({}){}: updated", updating_pos_in_tree, if updating_pos_in_tree < 10 {" "} else {""});
+            println!("{:?}", self.segment_tree.0);
+            // =============================================================================================
         }
+    }
+}
+impl Debug for SegmentTree {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let log2 = |mut pow_of_2: usize| {
+            let mut pow = 0;
+            loop {
+                pow_of_2 /= 2; pow += 1;
+                if pow_of_2 == 1 {break;}
+            }
+            pow
+        };
+        let tree_size = self.segment_tree.0.len();
+        
+        write!(f, "{}", {
+            let (mut indent, mut space) = (0, 1);
+
+            let line_num = log2(tree_size + 1);
+            let mut lines = vec![String::new(); line_num];
+
+            for l in 0..line_num { let line_idx = line_num - l - 1;
+                lines[line_idx] += &" ".repeat(indent);
+                lines[line_idx] += self.segment_tree.0[2_usize.pow(line_idx as u32)..=2_usize.pow((line_idx+1) as u32)-1]
+                    .iter().fold("".to_owned(), |x,y| x + &y.to_string() + &" ".repeat(space)).trim();
+
+                indent += 2_usize.pow(l as u32);
+                space  += 2_usize.pow((l + 1) as u32);
+            }
+            lines.join("\n")
+            /*
+               1
+             2   3
+            4 5 6 7
+
+                   1
+               2       3
+             4   5   6   7
+            8 9 9 9 0 0 0 0
+            */
+        })
     }
 }
 
 
 fn main() {
     input! {w:usize, n:usize}
-    let mut segment_tree = SegmentTree::new(w);
+    let (mut segment_tree, mut ans) = (SegmentTree::new(1+w), String::new());
+
     for _ in 0..n {
         input! {l:usize, r:usize}
-        
+        let max_height_in_l_r = segment_tree.range_max(l..=r);
+        let next_height = max_height_in_l_r + 1;
+
+        ans += &(next_height.to_string() + "\n");
+        for pos in l..=r {
+            segment_tree.update(pos, next_height)
+        }
+    }
+
+    print!("{}", ans);
+    println!("{:?}\n{:?}", &segment_tree.segment_tree.0, segment_tree)
+}
+
+#[cfg(test)]
+mod test_idx_range {
+    use super::IdxRange;
+    #[test]
+    fn contains_1() {
+        assert!(IdxRange(2..=10).contains(&IdxRange(3..=9)))
+    }
+    #[test]
+    fn contains_2() {
+        assert!(IdxRange(2..=10).contains(&IdxRange(3..=10)))
+    }
+    #[test]
+    fn contains_3() {
+        assert!(IdxRange(2..=10).contains(&IdxRange(2..=9)))
+    }
+    #[test]
+    fn not_contains_1() {
+        assert!( ! IdxRange(3..=10).contains(&IdxRange(2..=9)))
+    }
+
+    #[test]
+    fn is_out_of_1() {
+        assert!(IdxRange(4..=10).is_out_of(&IdxRange(1..=3)))
+    }
+    #[test]
+    fn is_out_of_2() {
+        assert!(IdxRange(1..=3).is_out_of(&IdxRange(4..=10)))
+    }
+    #[test]
+    fn not_is_out_of_1() {
+        assert!( ! IdxRange(4..=10).is_out_of(&IdxRange(1..=6)))
     }
 }
