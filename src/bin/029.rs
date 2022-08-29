@@ -85,6 +85,9 @@ struct /*Lazy*/SegmentTree {  // for range_max //
             // lazy_tree:    CompleteBinaryTree(vec![0; 1+tree_size]),
         }
     }
+    fn _tree_size(&self) -> usize {
+        self.array_size * 2 - 1
+    }
 
     fn range_max(&self, search_range: RangeInclusive<usize>) -> usize {
         self._range_max(
@@ -97,7 +100,7 @@ struct /*Lazy*/SegmentTree {  // for range_max //
         search_range:            &IdxRange,
         current_pos_in_tree:     usize,
         current_searching_range: IdxRange, // これは current_searching_pos_in_tree と self.array_size に依存して決まる
-                                           // が、引数として持つ方が速い
+                                              // が、引数として持つ方が速い
     ) -> usize {
         match current_searching_range {
             range if range.is_out_of(search_range) => 0,
@@ -110,11 +113,11 @@ struct /*Lazy*/SegmentTree {  // for range_max //
     }
 
     fn update(&mut self, updating_pos_in_array: usize, new_value: usize) {
-        let mut updating_pos_in_tree = self.array_size + updating_pos_in_array;
+        let mut updating_pos_in_tree = (self._tree_size() / 2) + updating_pos_in_array;
         self.segment_tree.update_value_at(updating_pos_in_tree, new_value);
         // =============================================================================================
-        println!("value at pos({}){}: updated", updating_pos_in_tree, if updating_pos_in_tree < 10 {" "} else {""});
-        println!("{:?}", self.segment_tree.0);
+        // println!("value at pos({}){}: updated", updating_pos_in_tree, if updating_pos_in_tree < 10 {" "} else {""});
+        // println!("{:?}", self.segment_tree.0);
         // =============================================================================================
 
         while updating_pos_in_tree > ROOT_IDX {
@@ -123,15 +126,15 @@ struct /*Lazy*/SegmentTree {  // for range_max //
 
             if new_value <= old_value {
                 // =============================================================================================
-                println!("-- breaked at pos({})", updating_pos_in_tree);
+                // println!("-- breaked at pos({})", updating_pos_in_tree);
                 // =============================================================================================
                 break;
             }
 
             self.segment_tree.update_value_at(updating_pos_in_tree, new_value);
             // =============================================================================================
-            println!("value at pos({}){}: updated", updating_pos_in_tree, if updating_pos_in_tree < 10 {" "} else {""});
-            println!("{:?}", self.segment_tree.0);
+            // println!("value at pos({}){}: updated", updating_pos_in_tree, if updating_pos_in_tree < 10 {" "} else {""});
+            // println!("{:?}", self.segment_tree.0);
             // =============================================================================================
         }
     }
@@ -147,7 +150,7 @@ impl Debug for SegmentTree {
             pow
         };
         let tree_size = self.segment_tree.0.len();
-        
+
         write!(f, "{}", {
             let (mut indent, mut space) = (0, 1);
 
@@ -191,42 +194,17 @@ fn main() {
         for pos in l..=r {
             segment_tree.update(pos, next_height)
         }
+        // =============================================================================================
+        // println!("{:?}\n", segment_tree)
+        // =============================================================================================
     }
 
     print!("{}", ans);
-    println!("{:?}\n{:?}", &segment_tree.segment_tree.0, segment_tree)
 }
 
-#[cfg(test)]
-mod test_idx_range {
-    use super::IdxRange;
-    #[test]
-    fn contains_1() {
-        assert!(IdxRange(2..=10).contains(&IdxRange(3..=9)))
-    }
-    #[test]
-    fn contains_2() {
-        assert!(IdxRange(2..=10).contains(&IdxRange(3..=10)))
-    }
-    #[test]
-    fn contains_3() {
-        assert!(IdxRange(2..=10).contains(&IdxRange(2..=9)))
-    }
-    #[test]
-    fn not_contains_1() {
-        assert!( ! IdxRange(3..=10).contains(&IdxRange(2..=9)))
-    }
 
-    #[test]
-    fn is_out_of_1() {
-        assert!(IdxRange(4..=10).is_out_of(&IdxRange(1..=3)))
-    }
-    #[test]
-    fn is_out_of_2() {
-        assert!(IdxRange(1..=3).is_out_of(&IdxRange(4..=10)))
-    }
-    #[test]
-    fn not_is_out_of_1() {
-        assert!( ! IdxRange(4..=10).is_out_of(&IdxRange(1..=6)))
-    }
-}
+/*
+    以上 SegmentTree による実装だが、これでは update の効率が悪いために TLE する。
+    そこで、値の更新を遅延するというアイデアでこれを解決する。
+    (029_lazy.rs に続く)
+*/
