@@ -42,7 +42,8 @@ fn main() {
     let orders = (1..=n).permutations(n).map(|p| [vec![0], p].concat());
     /*  可読性を重視して先頭に padding を入れる。
     Rust ならこの程度オーバーヘッドを抱えても確実に AC できる (500ms くらい)
-    (padding なしなら 230ms くらい) */
+    (padding なしなら 230ms くらい)
+    ちなみに mut p に insert(0,0) するよりこのように vec![0] と concat() する方が明確に速い */
     'check_running_order: for running_order in orders {
         let sum_of_time = {
             let mut sum = 0;
