@@ -39,11 +39,11 @@ fn main() {
 
     /* 以下、n <= 10 の制約を活かして n! 通りの走順を全探索する */
     let mut min_sum_of_time = INF;
-    'check_running_order: for mut running_order in (1..=n).permutations(n) {
-        running_order.insert(0, 0); // 可読性を重視して padding を入れる。
-        // Rust ならこの程度オーバーヘッドを抱えても確実に AC できる (500ms くらい)
-        // (padding なしなら 230ms くらい)
-        
+    let orders = (1..=n).permutations(n).map(|p| [vec![0], p].concat());
+    /*  可読性を重視して先頭に padding を入れる。
+    Rust ならこの程度オーバーヘッドを抱えても確実に AC できる (500ms くらい)
+    (padding なしなら 230ms くらい) */
+    'check_running_order: for running_order in orders {
         let sum_of_time = {
             let mut sum = 0;
 
