@@ -41,7 +41,7 @@ fn main() {
     let mut min_sum_of_time = INF;
     'check_running_order: for mut running_order in (1..=n).permutations(n) {
         running_order.insert(0, 0); // 可読性を重視して padding を入れる。
-        // Rust ならこれ程度オーバーヘッドを抱えても確実に AC できる (500ms くらい)
+        // Rust ならこの程度オーバーヘッドを抱えても確実に AC できる (500ms くらい)
         // (padding なしなら 230ms くらい)
         
         let sum_of_time = {
