@@ -18,9 +18,6 @@ fn main() {
         let mut bad_terms = [[false; 1+N_LIMIT]; 1+N_LIMIT];
         for _ in 0..m {
             input! {x:usize, y:usize}
-            // =========================================================================
-            // {x:u8, y:u8} として bad_terms[x as usize][y as usize] 〜　とする方がいいのか？
-            // =========================================================================
             bad_terms[x][y] = true;
             bad_terms[y][x] = true;
         } bad_terms
@@ -28,9 +25,9 @@ fn main() {
 
     /*
     input! {
-        n: usize,
-        a: [[0_u16; n]; n],
-        m: usize,
+        n:  usize,
+        a:  [[0_u16; n]; n],
+        m:  usize,
         xy: [(u16, u16); m]
     }
 
@@ -43,7 +40,7 @@ fn main() {
     /* 以下、n <= 10 の制約を活かして n! 通りの走順を全探索する */
     let mut min_sum_of_time = INF;
     'check_running_order: for mut running_order in (1..=n).permutations(n) {
-        running_order.insert(0, 0); // padding
+        running_order.insert(0, 0); // 可読性を重視して padding を入れる。Rust ならこれ程度オーバーヘッドを抱えても確実に AC できる
         
         let sum_of_time = {
             let mut sum = 0;
@@ -53,11 +50,12 @@ fn main() {
                 if bad_terms[runner][next_runner] {
                     continue 'check_running_order
                 }
-
                 sum += times[runner][section]
             }
+
             sum + times[running_order[n]][n]
         };
+        
         min_sum_of_time = min_sum_of_time.min(sum_of_time)
     }
 
