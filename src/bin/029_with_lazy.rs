@@ -83,7 +83,7 @@ struct LazySegmentTree {
             r if r.is_in(target_array_range)     => self.segments[tree_pos],
             r if r.is_out_of(target_array_range) => 0,
             _ => {
-                if self.lazy[tree_pos].is_some() {self._propagate(tree_pos, target_array_range, &dealing_array_range)}
+                if self.lazy[tree_pos].is_some() {self._propagate(tree_pos, &dealing_array_range, &dealing_array_range)}
                 max(
                     self._range_max(target_array_range, left_child_pos(tree_pos),  dealing_array_range.left_half()),
                     self._range_max(target_array_range, right_child_pos(tree_pos), dealing_array_range.right_half())
@@ -123,7 +123,7 @@ struct LazySegmentTree {
                 // 自ノードだけを実際に更新して抜ける (子ノードは必要になるまで更新しない)
             } else {
                 self._propagate(tree_pos, target_array_range, &dealing_array_range);
-
+                // target_range に入ってる 部分と入ってない部分がある場合、子孫ノードに伝搬する
                 self.segments[tree_pos] = max(
                     self.segments[left_child_pos(tree_pos)],
                     self.segments[right_child_pos(tree_pos)]
