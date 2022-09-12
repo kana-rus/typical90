@@ -137,10 +137,9 @@ struct LazySegmentTree {
         target_array_range:  &PosRange,
         dealing_array_range: &PosRange
     ) {
-        let lazy_value = self.lazy[tree_pos];//.expect(&format!("lazy[{}] is None!", tree_pos));
-        self.lazy[tree_pos] = None;
-        self._update(target_array_range, lazy_value, left_child_pos(tree_pos),  dealing_array_range.left_half());
-        self._update(target_array_range, lazy_value, right_child_pos(tree_pos), dealing_array_range.right_half());
+        let lazy_val = self.lazy[tree_pos].take();
+        self._update(target_array_range, lazy_val, left_child_pos(tree_pos),  dealing_array_range.left_half());
+        self._update(target_array_range, lazy_val, right_child_pos(tree_pos), dealing_array_range.right_half());
     }
 }
 // =========================================================================================================
