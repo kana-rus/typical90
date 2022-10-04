@@ -1,10 +1,8 @@
 use proconio::input;
 
-fn alphabet(index: usize) -> char {
-    (index as u8 + 96) as char
-}
-
 fn main() {
+    let alphabet = |i: usize| -> (i as u8 + 96) as char;
+
     input!{
         n: usize, k:usize,
         s: String
@@ -32,24 +30,22 @@ fn main() {
     z   -  -  -  -  -  -  -
 
     のように、i 行 j 列に「 S の j 文字目以右で
-    i 番目のアルファベットが初登場するのは S の何文字目か 」
+    i 番目のアルファベットが最後に登場するのは S の何文字目か 」
     が入った表を作る (登場しない場合は S の長さより大きい数
     を入れておけばよい)。
     後ろから累積的に計算して作れる。
     */
     let list = {
-        let mut li = vec![vec![inf; 1+n+1]; 1+26];
-        // 0 + 1〜n + n+1,  0 + 1〜26
+        let mut breakt = vec![
+            vec![inf; 1+n+1]; // (1~n) + 1
+        1+26]; // 1~26
         for i in 1..=26 {
-            for back in 1..=n { let j = n - back + 1; // S の j 文字目
-                if s[j-1] == alphabet(i) { // インデックス j-1
-                    li[i][j] = j;
-                } else {
-                    li[i][j] = li[i][j+1]; // このために n+2 列目を用意した
-                }
+            for back in 1..=n {
+                let j = n - back + 1; // S の j 文字目
+                list[i][j] = if s[j-1]==alphabet(i) {j} else {list[i][j+1]}
             }
         }
-        li
+        list
     };
 
     let mut ans = String::new();
@@ -82,10 +78,10 @@ fn main() {
             if process_ans_len + (1 + n - j) >= k {
                 ans += &alphabet(i).to_string();
                 current_pos = j + 1;
-                break;
+                break
             }
         }
     }
     
-    println!("{}", ans);
+    println!("{}", ans)
 }
