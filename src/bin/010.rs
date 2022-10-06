@@ -15,28 +15,27 @@ fn main() {
     で求められる。
     */
     let (sum1, sum2) = {
-        let mut s1 = vec![0; 1+n];
-        let mut s2 = vec![0; 1+n];
+        let mut sum1 = vec![0; 1+n];
+        let mut sum2 = vec![0; 1+n];
 
         for i in 1..=n {
-            s1[i] = s1[i-1];
-            s2[i] = s2[i-1];
-            let data = class_point[i-1];
-            if data.0 == 1 {
-                s1[i] += data.1;
-            } else {
-                s2[i] += data.1;
+            sum1[i] = sum1[i-1];
+            sum2[i] = sum2[i-1];
+            let (class, point) = class_point[i-1];
+            match class {
+                1 => sum1[i] += point,
+                2 => sum2[i] += point,
+                _ => unreachable!()
             }
         }
-
-        (s1, s2)
+        (sum1, sum2)
     };
 
     let mut ans = String::new();
-    for query in l_r {
-        ans += &(sum1[query.1] - sum1[query.0 - 1]).to_string();
+    for (l, r) in l_r {
+        ans += &(sum1[r] - sum1[l - 1]).to_string();
         ans += " ";
-        ans += &(sum2[query.1] - sum2[query.0 - 1]).to_string();
+        ans += &(sum2[r] - sum2[l - 1]).to_string();
         ans += "\n"
     }
     println!("{}", ans);
