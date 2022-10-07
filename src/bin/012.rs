@@ -4,9 +4,7 @@ struct UnionFind {
     parent: Vec<usize>
 } impl UnionFind {
     fn new(size: usize) -> UnionFind {
-        UnionFind {
-            parent: vec![0; size]
-        }
+        UnionFind {parent: vec![0; size]}
     }
     /*
     fn root(&self, pos: usize) -> usize {
@@ -35,7 +33,7 @@ struct UnionFind {
         let root_a = self.root(a);
         let root_b = self.root(b);
         if root_a != root_b {
-            self.parent[root_a] = root_b;
+            self.parent[root_a] = root_b
         }
     }
     fn same(&mut self, a:usize, b:usize) -> bool {
@@ -50,39 +48,35 @@ fn main() {
     }
     let hash = |r:usize, c:usize| w * r + c;
     // 1 <= r <= h, 1 <= c <= w で一意
-    let mut used = vec![vec![false; 1+w+1]; 1+h+1];
+
     let mut uf = UnionFind::new(hash(1+h+1, 1+w+1));
+    let mut red = vec![
+        vec![false; 1+(w+1)]; // 0, 1 ~ w, (w+1)
+    1+(h+1)]; // 0, 1 ~ h, (h+1)
 
     let mut ans = String::new();
-    let mut handle_query = |querytype:u8| {
-        if querytype == 1 {
+    let mut handle_query = |query_type: u8| match query_type {
+        1 => {
             input! { r:usize, c:usize }
-            used[r][c] = true;
-            let next_to = [(r-1,c), (r,c+1), (r+1,c), (r,c-1)];
-            for n in next_to.iter() {
-                if used[n.0][n.1] {
-                    uf.unite(hash(r, c), hash(n.0, n.1));
+            red[r][c] = true;
+            let next = [(r-1,c), (r,c+1), (r+1,c), (r,c-1)];
+            for (x,y) in &next {
+                if red[*x][*y] {
+                    uf.unite(hash(r, c), hash(*x, *y));
                 }
             }
-        }
-        if querytype == 2 {
+        },
+        2 => {
             input! { ra:usize, ca:usize, rb:usize, cb:usize }
-            let can_follow =
-                if !used[ra][ca] && !used[rb][cb] {
-                    false
-                } else {
-                    uf.same(hash(ra, ca), hash(rb, cb))
-                };
-            ans += if can_follow {
-                       "Yes\n"
-                   } else {
-                       "No\n"
-                   }
-        }
+            ans += if red[ra][ca] && red[rb][cb]
+                   && uf.same(hash(ra, ca), hash(rb, cb))
+                {"Yes\n"} else {"No\n"}
+        },
+        _ => unreachable!()
     };
     for _ in 0..q {
-        input! { query_type: u8 }
-        handle_query(query_type)
+        input! { t: u8 }
+        handle_query(t)
     }
-    print!("{}", ans);
+    print!("{}", ans)
 }
