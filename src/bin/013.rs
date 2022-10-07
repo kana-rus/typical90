@@ -6,13 +6,13 @@ fn main() {
     input! { n: usize, m: usize }
 
     let graph = {
-        let mut g: Vec<Vec<(usize, usize)>> = vec![vec![]; 1+n];
+        let mut graph = vec![vec![]; 1+n];
         for _ in 0..m {
             input! { a_i: usize, b_i: usize, c_i: usize }
-            g[a_i].push((b_i, c_i));
-            g[b_i].push((a_i, c_i));
+            graph[a_i].push((b_i, c_i));
+            graph[b_i].push((a_i, c_i));
         }
-        g
+        graph
     };
 
     /*
@@ -20,32 +20,28 @@ fn main() {
         ...-> 街１から任意の街まで、および街ｎから任意の街までの最短距離を事前に求めておき、足し合わせる
     */
 
-    let dijkstra = |start_point: usize| -> Vec<usize> {
-        let mut dist_map_from_start_point: Vec<usize> = vec![INF; 1+n];
+    let dijkstra = |start: usize| -> Vec<usize> {
+        let mut distmap_from_start: Vec<usize> = vec![INF; 1+n];
         let mut queue: VecDeque<usize> = VecDeque::with_capacity(n);
 
-        dist_map_from_start_point[start_point] = 0;
-        queue.push_back(start_point);
+        distmap_from_start[start] = 0;
+        queue.push_back(start);
 
         while !queue.is_empty() {
             let pos = queue.pop_front().unwrap();
-            for (to, cost) in graph[pos].iter() {
-                if dist_map_from_start_point[pos] + cost < dist_map_from_start_point[*to] {
-                    dist_map_from_start_point[*to] = dist_map_from_start_point[pos] + cost;
-                    queue.push_back(*to);
+            for (to, cost) in &graph[pos] {
+                if distmap_from_start[pos] + cost < distmap_from_start[*to] {
+                    distmap_from_start[*to] = distmap_from_start[pos] + cost;
+                    queue.push_back(*to)
                 }
             }
         }
 
-        dist_map_from_start_point
+        distmap_from_start
     };
 
     let (distmap_from_1, distmap_from_n) = (dijkstra(1), dijkstra(n));
-    print!("{}", {
-        let mut ans = String::new();
-        for k in 1..=n {
-            ans += &((distmap_from_1[k] + distmap_from_n[k]).to_string() + "\n");
-        }
-        ans
-    })
+    print!("{}", (1..=n).fold(String::new(), |j, k|
+        j + &(distmap_from_1[k] + distmap_from_n[k]).to_string() + "\n"
+    ))
 }
