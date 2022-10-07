@@ -16,10 +16,10 @@ fn main() {
     // これは「 答えが m 以上かどうか 」を調べていることになる。
     let ans_is_more_than = |m: usize| -> bool {
         let mut pieces: usize = 1;
-        let mut pre_cut: usize = 0;
-        for i in 0..n {
-            if a[i] - pre_cut >= m && l - a[i] >= m {
-                pre_cut = a[i];
+        let mut prev_cut: usize = 0;
+        for cut in &a {
+            if cut - prev_cut >= m && l - cut >= m {
+                prev_cut = *cut;
                 pieces += 1;
             }
         }
@@ -31,14 +31,13 @@ fn main() {
     これを使って二部探索で答えを探す。
     */
     // m はもちろん 0 以上 l 以下
-    let mut left = 0;
-    let mut right = l;
+    let (mut left, mut right) = (0, l);
     while right - left > 1 {
         let mid = (left + right ) / 2;
         if ans_is_more_than(mid) { // 答えが mid 「 以上 」なら
-            left = mid;
+            left = mid
         } else { // 答えが mid 「 未満 」なら
-            right = mid;
+            right = mid
         }
     }
     // while を抜けて left right が 1 差で並んだとき
